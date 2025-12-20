@@ -182,19 +182,10 @@ func main() {
 	defer w.Destroy()
 
 	w.SetTitle("Hello, World")
-	w.SetSize(640, 480, WEBVIEW_HINT_NONE)
+	w.SetSize(1280, 720, WEBVIEW_HINT_NONE)
 	w.Navigate("http://192.168.0.236:3000")
 	w.Run()
 
 	v := CurrentVersion()
 	fmt.Println(v.Version.Major, v.Version.Minor, v.Version.Patch)
 }
-
-/*
-  webview_t w = webview_create(0, NULL);
-  webview_set_title(w, "Basic Example");
-  webview_set_size(w, 480, 320, WEBVIEW_HINT_NONE);
-  webview_set_html(w, "Thanks for using webview!");
-  webview_run(w);
-  webview_destroy(w);
-*/
