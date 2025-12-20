@@ -1,4 +1,4 @@
-package main
+package gowv 
 
 /*
 #cgo CFLAGS: -I./libs/webview/include
@@ -15,7 +15,6 @@ package main
 import "C"
 import (
 	"fmt"
-	"runtime"
 	"unsafe"
 )
 
@@ -71,12 +70,13 @@ type VersionInfo struct {
 	BuildMetadata [48]byte
 }
 
-type webview struct {
+// Webview instance wrapper.
+type Instance struct {
 	W C.webview_t
 }
 
 // Creates a new webview instance.
-func (w *webview) Create(debug bool, window unsafe.Pointer) {
+func (h *Instance) Create(debug bool, window unsafe.Pointer) {
 	var d int
 	if debug {
 		d = 1
@@ -84,79 +84,79 @@ func (w *webview) Create(debug bool, window unsafe.Pointer) {
 		d = 0
 	}
 
-	w.W = C.webview_create(C.int(d), window)
+	h.W = C.webview_create(C.int(d), window)
 }
 
 // Destroys a webview instance and closes the native window.
-func (w *webview) Destroy() Error {
-	err := C.webview_destroy(w.W)
+func (h *Instance) Destroy() Error {
+	err := C.webview_destroy(h.W)
 	fmt.Println("error", err)
 
 	return WEBVIEW_ERROR_OK
 }
 
 // Runs the main loop until it's terminated.
-func (w *webview) Run() Error {
-	err := C.webview_run(w.W)
+func (h *Instance) Run() Error {
+	err := C.webview_run(h.W)
 	fmt.Println("error", err)
 
 	return WEBVIEW_ERROR_OK
 }
 
-func (w *webview) SetTitle(title string) Error {
+func (h *Instance) SetTitle(title string) Error {
 	s := C.CString(title)
 	defer C.free(unsafe.Pointer(s))
 
-	err := C.webview_set_title(w.W, s)
+	err := C.webview_set_title(h.W, s)
 	fmt.Println("error ", err)
 
 	return WEBVIEW_ERROR_OK
 }
 
-func (w *webview) SetSize(width int, height int, hints Hint) Error {
-	err := C.webview_set_size(w.W, C.int(width), C.int(height), C.webview_hint_t(hints))
+func (h *Instance) SetSize(width int, height int, hints Hint) Error {
+	err := C.webview_set_size(h.W, C.int(width), C.int(height), C.webview_hint_t(hints))
 	fmt.Println("error ", err)
 
 	return WEBVIEW_ERROR_OK
 }
 
 // Navigates webview to the given URL. URL may be a properly encoded data URI.
-func (w *webview) Navigate(url string) Error {
+func (h *Instance) Navigate(url string) Error {
 	s := C.CString(url)
 	defer C.free(unsafe.Pointer(s))
 
-	err := C.webview_navigate(w.W, s)
+	err := C.webview_navigate(h.W, s)
 	fmt.Println("error ", err)
 
 	return WEBVIEW_ERROR_OK
 }
 
 // Load HTML content into the webview.
-func (w *webview) SetHTML(html string) Error {
+func (h *Instance) SetHTML(html string) Error {
 	s := C.CString(html)
 	defer C.free(unsafe.Pointer(s))
 
-	err := C.webview_set_html(w.W, s)
+	err := C.webview_set_html(h.W, s)
 	fmt.Println("error ", err)
 
 	return WEBVIEW_ERROR_OK
 }
 
-func (w *webview) Init(js string) Error {
+func (h *Instance) Init(js string) Error {
 	s := C.CString(js)
 	defer C.free(unsafe.Pointer(s))
 
-	err := C.webview_init(w.W, s)
+	err := C.webview_init(h.W, s)
 	fmt.Println("error ", err)
 
 	return WEBVIEW_ERROR_OK
 }
 
-func (w *webview) Eval(js string) Error {
+func (h *Instance) Eval(js string) Error {
 	s := C.CString(js)
 	defer C.free(unsafe.Pointer(s))
 
-	err := C.webview_eval(w.W, s)
+	err := C.webview_eval(h.W, s)
 	fmt.Println("error ", err)
 
 	return WEBVIEW_ERROR_OK
@@ -174,18 +174,3 @@ func CurrentVersion() VersionInfo {
 	}
 }
 
-func main() {
-	runtime.LockOSThread()
-
-	w := webview{}
-	w.Create(true, nil)
-	defer w.Destroy()
-
-	w.SetTitle("Hello, World")
-	w.SetSize(1280, 720, WEBVIEW_HINT_NONE)
-	w.Navigate("http://192.168.0.236:3000")
-	w.Run()
-
-	v := CurrentVersion()
-	fmt.Println(v.Version.Major, v.Version.Minor, v.Version.Patch)
-}
