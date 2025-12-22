@@ -9,13 +9,21 @@ package gowv
 #cgo linux pkg-config: gtk+-3.0 webkit2gtk-4.1
 
 #include "webview.h"
+
 #include <stdlib.h>
 #include <stdint.h>
+
+void CgoWebViewDispatch(webview_t w, uintptr_t arg);
+void CgoWebViewBind(webview_t w, const char *name, uintptr_t index);
+void CgoWebViewUnbind(webview_t w, const char *name);
 */
 import "C"
 
 import (
-	"fmt"
+	"encoding/json"
+	"errors"
+	"reflect"
+	"runtime"
 	"sync"
 	"unsafe"
 )
@@ -53,9 +61,9 @@ func CurrentVersion() VersionInfo {
 
 	return VersionInfo{
 		Version:       version,
-		VersionNumber: fmt.Sprintf("%v.%v.%v", version.Major, version.Minor, version.Patch),
-		PreRelease:    fmt.Sprintf("-%v.%v.%v", version.Major, version.Minor, version.Patch),
-		BuildMetadata: fmt.Sprintf("+%v.%v.%v", version.Major, version.Minor, version.Patch),
+		VersionNumber: C.WEBVIEW_VERSION_NUMBER,
+		PreRelease:    C.WEBVIEW_VERSION_PRE_RELEASE,
+		BuildMetadata: C.WEBVIEW_VERSION_BUILD_METADATA,
 	}
 }
 
@@ -98,7 +106,7 @@ const (
 	// One or more invalid arguments have been specified e.g. in a function call.
 	WEBVIEW_ERROR_INVALID_ARGUMENT = -2
 	// An unspecified error occurred. A more specific error code may be needed.
-	UWEBVIEW_ERROR_NSPECIFIED = -1
+	WEBVIEW_ERROR_UNSPECIFIED = -1
 	// OK/Success. Functions that return error codes will typically return this
 	// to signify successful operations.
 	WEBVIEW_ERROR_OK = 0
@@ -109,7 +117,13 @@ const (
 )
 
 func HadError(err Error) bool {
-	return err == WEBVIEW_ERROR_OK
+	return err != WEBVIEW_ERROR_OK
+}
+
+func PanicOnError(err Error) {
+	if HadError(err) {
+		panic(err)
+	}
 }
 
 // Webview instance wrapper.
@@ -120,10 +134,47 @@ type Instance struct {
 
 // Global vars.
 var (
-	mu         sync.Mutex
-	dispatches map[string]func()
-	functions  map[string]func()
+	mu       sync.Mutex
+	index    uintptr
+	dispatch = map[uintptr]func(){}
+	bindings = map[uintptr]func(id string, req string) (any, error){}
 )
+
+func init() {
+	// native GUI toolkits require main OS thread
+	runtime.LockOSThread()
+}
+
+//export _webviewDispatchGoCallback
+func _webviewDispatchGoCallback(index unsafe.Pointer) {
+	mu.Lock()
+	f := dispatch[uintptr(index)]
+	delete(dispatch, uintptr(index))
+	mu.Unlock()
+	f()
+}
+
+//export _webviewBindingGoCallback
+func _webviewBindingGoCallback(w C.webview_t, id *C.char, req *C.char, index uintptr) {
+	mu.Lock()
+	f := bindings[uintptr(index)]
+	mu.Unlock()
+	jsString := func(v interface{}) string { b, _ := json.Marshal(v); return string(b) }
+	status, result := 0, ""
+	if res, err := f(C.GoString(id), C.GoString(req)); err != nil {
+		status = -1
+		result = jsString(err.Error())
+	} else if b, err := json.Marshal(res); err != nil {
+		status = -1
+		result = jsString(err.Error())
+	} else {
+		status = 0
+		result = string(b)
+	}
+	s := C.CString(result)
+	defer C.free(unsafe.Pointer(s))
+	C.webview_return(w, id, C.int(status), s)
+}
 
 // Creates a new webview instance.
 func (h *Instance) Create(debug bool, window unsafe.Pointer) {
@@ -157,12 +208,24 @@ func (h *Instance) Terminate() Error {
 	return Error(err)
 }
 
+func (h *Instance) GetWindow() unsafe.Pointer {
+	return C.webview_get_window(h.W)
+}
+
 // Schedules a function to be invoked on the thread with the run/event loop.
 //
 // Since library functions generally do not have thread safety guarantees,
 // this function can be used to schedule code to execute on the main/GUI
 // thread and thereby make that execution safe in multi-threaded applications.
-func (h *Instance) Dispatch() Error {
+// TODO
+func (h *Instance) Dispatch(fn func()) Error {
+	mu.Lock()
+	for ; dispatch[index] != nil; index++ {
+	}
+	dispatch[index] = fn
+	mu.Unlock()
+
+	C.CgoWebViewDispatch(h.W, C.uintptr_t(index))
 
 	return WEBVIEW_ERROR_OK
 }
@@ -182,6 +245,18 @@ func (h *Instance) SetSize(width int, height int, hints Hint) Error {
 
 // Set the icon of the native window
 func (h *Instance) SetIcon(icon string) Error {
+	return WEBVIEW_ERROR_OK
+}
+
+func (h *Instance) Hide() Error {
+	return WEBVIEW_ERROR_OK
+}
+
+func (h *Instance) Show() Error {
+	return WEBVIEW_ERROR_OK
+}
+
+func (h *Instance) SetMaximized() Error {
 	return WEBVIEW_ERROR_OK
 }
 
@@ -218,38 +293,114 @@ func (h *Instance) Eval(js string) Error {
 	return Error(C.webview_eval(h.W, s))
 }
 
-type BindFun func(id string, req string, arg unsafe.Pointer) 
-
 // Binds a function pointer to a new global JavaScript function.
-func (h *Instance) Bind(name string, fn BindFun, arg unsafe.Pointer) Error {
-	fmt.Println("binding: ", name)
+// TODO
+func (h *Instance) Bind(name string, fn any) Error {
+	// v := reflect.ValueOf(fn)
 
-	// check if function exists in map
-	// map function
+	// if v.Kind() != reflect.Func {
+	// 	return WEBVIEW_ERROR_INVALID_ARGUMENT
+	// }
 
+	// if n := v.Type().NumOut(); n > 2 {
+	// 	return WEBVIEW_ERROR_INVALID_ARGUMENT
+	// }
+
+	// _ = func(id string, req string) (any, error) {
+	// 	return nil, nil
+	// }
+
+	// mu.Lock()
+	// mu.Unlock()
+	/// NOTE: just use webview_go's implementation for now
+	v := reflect.ValueOf(fn)
+	// f must be a function
+	if v.Kind() != reflect.Func {
+		return WEBVIEW_ERROR_UNSPECIFIED
+	}
+	// f must return either value and error or just error
+	if n := v.Type().NumOut(); n > 2 {
+		return WEBVIEW_ERROR_INVALID_ARGUMENT
+	}
+
+	binding := func(id, req string) (interface{}, error) {
+		raw := []json.RawMessage{}
+		if err := json.Unmarshal([]byte(req), &raw); err != nil {
+			return nil, err
+		}
+
+		isVariadic := v.Type().IsVariadic()
+		numIn := v.Type().NumIn()
+		if (isVariadic && len(raw) < numIn-1) || (!isVariadic && len(raw) != numIn) {
+			return nil, errors.New("function arguments mismatch")
+		}
+		args := []reflect.Value{}
+		for i := range raw {
+			var arg reflect.Value
+			if isVariadic && i >= numIn-1 {
+				arg = reflect.New(v.Type().In(numIn - 1).Elem())
+			} else {
+				arg = reflect.New(v.Type().In(i))
+			}
+			if err := json.Unmarshal(raw[i], arg.Interface()); err != nil {
+				return nil, err
+			}
+			args = append(args, arg.Elem())
+		}
+		errorType := reflect.TypeOf((*error)(nil)).Elem()
+		res := v.Call(args)
+		switch len(res) {
+		case 0:
+			// No results from the function, just return nil
+			return nil, nil
+		case 1:
+			// One result may be a value, or an error
+			if res[0].Type().Implements(errorType) {
+				if res[0].Interface() != nil {
+					return nil, res[0].Interface().(error)
+				}
+				return nil, nil
+			}
+			return res[0].Interface(), nil
+		case 2:
+			// Two results: first one is value, second is error
+			if !res[1].Type().Implements(errorType) {
+				return nil, errors.New("second return value must be an error")
+			}
+			if res[1].Interface() == nil {
+				return res[0].Interface(), nil
+			}
+			return res[0].Interface(), res[1].Interface().(error)
+		default:
+			return nil, errors.New("unexpected number of return values")
+		}
+	}
+
+	mu.Lock()
+	for ; bindings[index] != nil; index++ {
+	}
+	bindings[index] = binding
+	mu.Unlock()
+	cname := C.CString(name)
+	defer C.free(unsafe.Pointer(cname))
+
+	C.CgoWebViewBind(h.W, cname, C.uintptr_t(index))
 	return WEBVIEW_ERROR_OK
 }
 
 // Removes a binding created with [Instance].Bind.
+// TODO
 func (h *Instance) Unbind(name string) Error {
-	fmt.Println("unbind: ", name)
+	cname := C.CString(name)
+	defer C.free(unsafe.Pointer(cname))
 
-	s := C.CString(name)
-	defer C.free(unsafe.Pointer(s))
+	C.CgoWebViewUnbind(h.W, cname)
 
-	// check if function exists in map
-	// remove bound function from map
-	err := C.webview_unbind(h.W, s)
-
-	return Error(err)
+	return WEBVIEW_ERROR_OK
 }
 
 // Responds to a binding call from the JS side.
 func (h *Instance) Return(id string, status int, result string) Error {
-	// This function is safe to call from another thread.
-	mu.Lock()
-	defer mu.Unlock()
-
 	i := C.CString(id)
 	defer C.free(unsafe.Pointer(i))
 
