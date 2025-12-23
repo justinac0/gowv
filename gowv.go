@@ -2,20 +2,32 @@ package gowv
 
 /*
 #cgo CFLAGS: -I${SRCDIR}/libs/webview/include
-#cgo CXXFLAGS: -I${SRCDIR}/libs/webview/include -DWEBVIEW_STATIC -DWEBVIEW_IMPLEMENTATION
+#cgo CXXFLAGS: -I${SRCDIR}/libs/webview/include -DWEBVIEW_STATIC
 
-#cgo linux CXXFLAGS: -DWEBVIEW_GTK -std=c++11
-#cgo linux LDFLAGS: -ldl
-#cgo linux pkg-config: gtk+-3.0 webkit2gtk-4.1
+#cgo linux openbsd freebsd netbsd CXXFLAGS: -DWEBVIEW_GTK -std=c++11
+#cgo linux openbsd freebsd netbsd LDFLAGS: -ldl
+#cgo linux openbsd freebsd netbsd pkg-config: gtk+-3.0 webkit2gtk-4.1
+
+#cgo darwin CXXFLAGS: -DWEBVIEW_COCOA -std=c++11
+#cgo darwin LDFLAGS: -framework WebKit -ldl
+
+#cgo windows CXXFLAGS: -DWEBVIEW_EDGE -std=c++14 -I${SRCDIR}/libs/mswebview2/include
+#cgo windows LDFLAGS: -static -ladvapi32 -lole32 -lshell32 -lshlwapi -luser32 -lversion
 
 #include "webview.h"
 
 #include <stdlib.h>
 #include <stdint.h>
 
-void CgoWebViewDispatch(webview_t w, uintptr_t arg);
-void CgoWebViewBind(webview_t w, const char *name, uintptr_t index);
-void CgoWebViewUnbind(webview_t w, const char *name);
+webview_error_t CgoWebViewDispatch(webview_t w, uintptr_t arg);
+webview_error_t CgoWebViewBind(webview_t w, const char *name, uintptr_t index);
+webview_error_t CgoWebViewUnbind(webview_t w, const char *name);
+
+void CgoNativeWindowSetIcon(void* window_handle, const char* filepath);
+void CgoNativeWindowHide(void* window_handle);
+void CgoNativeWindowShow(void* window_handle);
+void CgoNativeWindowSetMaximized(void* window_handle);
+void CgoNativeWindowSetMinimized(void* window_handle);
 */
 import "C"
 
@@ -25,6 +37,7 @@ import (
 	"reflect"
 	"runtime"
 	"sync"
+	"time"
 	"unsafe"
 )
 
@@ -173,7 +186,8 @@ func _webviewBindingGoCallback(w C.webview_t, id *C.char, req *C.char, index uin
 	}
 	s := C.CString(result)
 	defer C.free(unsafe.Pointer(s))
-	C.webview_return(w, id, C.int(status), s)
+
+	PanicOnError(Error(C.webview_return(w, id, C.int(status), s)))
 }
 
 // Creates a new webview instance.
@@ -225,9 +239,7 @@ func (h *Instance) Dispatch(fn func()) Error {
 	dispatch[index] = fn
 	mu.Unlock()
 
-	C.CgoWebViewDispatch(h.W, C.uintptr_t(index))
-
-	return WEBVIEW_ERROR_OK
+	return Error(C.CgoWebViewDispatch(h.W, C.uintptr_t(index)))
 }
 
 // Updates the title of the native window.
@@ -245,19 +257,59 @@ func (h *Instance) SetSize(width int, height int, hints Hint) Error {
 
 // Set the icon of the native window
 func (h *Instance) SetIcon(icon string) Error {
+	s := C.CString(icon)
+	defer C.free(unsafe.Pointer(s))
+	C.CgoNativeWindowSetIcon(h.GetWindow(), s)
+
 	return WEBVIEW_ERROR_OK
 }
 
 func (h *Instance) Hide() Error {
+	C.CgoNativeWindowHide(h.GetWindow())
+
 	return WEBVIEW_ERROR_OK
 }
 
 func (h *Instance) Show() Error {
+	C.CgoNativeWindowShow(h.GetWindow())
+
 	return WEBVIEW_ERROR_OK
 }
 
 func (h *Instance) SetMaximized() Error {
+	C.CgoNativeWindowSetMaximized(h.GetWindow())
+
 	return WEBVIEW_ERROR_OK
+}
+
+func (h *Instance) SetMinimized() Error {
+	C.CgoNativeWindowSetMinimized(h.GetWindow())
+
+	return WEBVIEW_ERROR_OK
+}
+
+func (h *Instance) BindExtensions() {
+	h.Bind("native_window_set_icon", func() {
+		h.SetIcon("")
+	})
+
+	h.Bind("native_window_show", func() {
+		h.Show()
+	})
+
+	h.Bind("native_window_hide", func() {
+		h.Hide()
+		time.Sleep(2 * time.Second)
+		h.Show()
+	})
+
+	h.Bind("native_window_set_maximized", func() {
+		h.SetMaximized()
+	})
+
+	h.Bind("native_window_set_minimized", func() {
+		h.SetMinimized()
+	})
 }
 
 // Navigates webview to the given URL. URL may be a properly encoded data URI.
@@ -296,29 +348,12 @@ func (h *Instance) Eval(js string) Error {
 // Binds a function pointer to a new global JavaScript function.
 // TODO
 func (h *Instance) Bind(name string, fn any) Error {
-	// v := reflect.ValueOf(fn)
-
-	// if v.Kind() != reflect.Func {
-	// 	return WEBVIEW_ERROR_INVALID_ARGUMENT
-	// }
-
-	// if n := v.Type().NumOut(); n > 2 {
-	// 	return WEBVIEW_ERROR_INVALID_ARGUMENT
-	// }
-
-	// _ = func(id string, req string) (any, error) {
-	// 	return nil, nil
-	// }
-
-	// mu.Lock()
-	// mu.Unlock()
-	/// NOTE: just use webview_go's implementation for now
 	v := reflect.ValueOf(fn)
-	// f must be a function
+
 	if v.Kind() != reflect.Func {
 		return WEBVIEW_ERROR_UNSPECIFIED
 	}
-	// f must return either value and error or just error
+
 	if n := v.Type().NumOut(); n > 2 {
 		return WEBVIEW_ERROR_INVALID_ARGUMENT
 	}
@@ -351,10 +386,8 @@ func (h *Instance) Bind(name string, fn any) Error {
 		res := v.Call(args)
 		switch len(res) {
 		case 0:
-			// No results from the function, just return nil
 			return nil, nil
 		case 1:
-			// One result may be a value, or an error
 			if res[0].Type().Implements(errorType) {
 				if res[0].Interface() != nil {
 					return nil, res[0].Interface().(error)
@@ -363,7 +396,6 @@ func (h *Instance) Bind(name string, fn any) Error {
 			}
 			return res[0].Interface(), nil
 		case 2:
-			// Two results: first one is value, second is error
 			if !res[1].Type().Implements(errorType) {
 				return nil, errors.New("second return value must be an error")
 			}
@@ -384,8 +416,7 @@ func (h *Instance) Bind(name string, fn any) Error {
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 
-	C.CgoWebViewBind(h.W, cname, C.uintptr_t(index))
-	return WEBVIEW_ERROR_OK
+	return Error(C.CgoWebViewBind(h.W, cname, C.uintptr_t(index)))
 }
 
 // Removes a binding created with [Instance].Bind.
@@ -394,9 +425,7 @@ func (h *Instance) Unbind(name string) Error {
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 
-	C.CgoWebViewUnbind(h.W, cname)
-
-	return WEBVIEW_ERROR_OK
+	return Error(C.CgoWebViewUnbind(h.W, cname))
 }
 
 // Responds to a binding call from the JS side.
