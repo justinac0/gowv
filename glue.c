@@ -4,6 +4,32 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+// NOTE: WEBVIEW_PLATFORM_* macros don't get exported because this
+// source is not compiled through a cpp compiler.
+#if defined(__APPLE__)
+#define GOWV_PLATFORM_DARWIN
+#elif defined(__unix__)
+#define GOWV_PLATFORM_LINUX
+#elif defined(_WIN32)
+#define GOWV_PLATFORM_WINDOWS
+#else
+#error "unable to detect current platform"
+#endif
+
+// NOTE: import platform specific source for handling gowv webview extension
+// functionality.
+#if defined(GOWV_PLATFORM_DARWIN)
+#include "platform/darwin.c"
+#elif defined(GOWV_PLATFORM_LINUX)
+#include "platform/linux.c"
+#elif defined(GOWV_PLATFORM_WINDOWS)
+#include "platform/windows.c"
+#else
+#error "webview not supported on your platform"
+#endif
+
+// NOTE: the below code is straight from webview/webview_go with some minor changes
+// mainly adding ability to check errors on webview_error_t returning functions.
 struct binding_context {
     webview_t w;
     uintptr_t index;

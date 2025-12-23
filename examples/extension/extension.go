@@ -1,6 +1,9 @@
 package main
 
-import webview "gowv"
+import (
+	webview "gowv"
+	"time"
+)
 
 const html = `
 <button id="set_icon">Set Icon</button>
@@ -29,7 +32,31 @@ func main() {
 	defer w.Destroy()
 	w.SetTitle("Extension Example")
 	w.SetSize(480, 320, webview.WEBVIEW_HINT_NONE)
-	w.BindExtensions()
+
+	w.Bind("native_set_icon", func() {
+		w.SetIcon("")
+	})
+
+	w.Bind("native_show", func() {
+		w.Show()
+	})
+
+	w.Bind("native_hide", func() {
+		go func() {
+			w.Hide()
+			time.Sleep(2 * time.Second)
+			w.Show()
+		}()
+	})
+
+	w.Bind("native_set_maximized", func() {
+		w.SetMaximized()
+	})
+
+	w.Bind("native_set_minimized", func() {
+		w.SetMinimized()
+	})
+
 	w.SetHTML(html)
 	w.Run()
 }

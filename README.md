@@ -1,7 +1,15 @@
 # gowv
-**gowv** is a webview wrapper for go heavily based of `webview/webview_go` (the official go binding).
-It provides extra control over underlying the native window in a cross-platform manner. And, unlike the official webview go bindings, errors handling is included for cgo calls to library functions.
+**gowv** is a webview wrapper for go, it's heavily based of `webview/webview_go`.
+It provides extra control over underlying the native window which I was looking for in webview.
 
+## Setup
+- Read the official webview `README.md`: https://github.com/webview/webview/tree/master
+  - Particularly `Prerequisites` and Getting started.
+### 
+### Windows
+- download installer https://www.msys2.org/
+- run `pacman -S mingw-w64-ucrt-x86_64-gcc`
+- set env path to bin/ of urct64
 ## TODO
 - [ ] cross-platform SetIcon
 - [ ] cross-platform Hide 
