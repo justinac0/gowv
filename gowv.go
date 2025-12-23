@@ -289,25 +289,25 @@ func (h *Instance) SetMinimized() Error {
 }
 
 func (h *Instance) BindExtensions() {
-	h.Bind("native_window_set_icon", func() {
+	h.Bind("native_set_icon", func() {
 		h.SetIcon("")
 	})
 
-	h.Bind("native_window_show", func() {
+	h.Bind("native_show", func() {
 		h.Show()
 	})
 
-	h.Bind("native_window_hide", func() {
+	h.Bind("native_hide", func() {
 		h.Hide()
 		time.Sleep(2 * time.Second)
 		h.Show()
 	})
 
-	h.Bind("native_window_set_maximized", func() {
+	h.Bind("native_set_maximized", func() {
 		h.SetMaximized()
 	})
 
-	h.Bind("native_window_set_minimized", func() {
+	h.Bind("native_set_minimized", func() {
 		h.SetMinimized()
 	})
 }
