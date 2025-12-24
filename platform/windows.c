@@ -1,23 +1,28 @@
+#include "common.h"
+
+#include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
 
 void CgoNativeWindowSetIcon(void* window_handle, const char* filepath) {
-    printf("(windows) CgoNativeWindowSetIcon called!\n");
+    UNUSED(window_handle);
+    UNUSED(filepath);
 }
 
-void CgoNativeWindowHide(void* window_handle) {
-    printf("(windows) CgoNativeWindowHide called!\n");
+void CgoNativeWindowHide(void* controller_handle) {
+    BOOL visible = ShowWindowAsync(controller_handle, SW_HIDE);
+    UNUSED(visible);
 }
 
-void CgoNativeWindowShow(void* window_handle) {
-    printf("(windows) CgoNativeWindowShow called!\n");
+void CgoNativeWindowShow(void* controller_handle) {
+    BOOL visible = ShowWindowAsync(controller_handle, SW_SHOW);
 }
 
 void CgoNativeWindowSetMaximized(void* window_handle) {
-    printf("(windows) CgoNativeWindowSetMaximized called!\n");
+    BOOL visible = ShowWindowAsync(window_handle, SW_MAXIMIZE);
 }
 
 void CgoNativeWindowSetMinimized(void* window_handle) {
-    printf("(windows) CgoNativeWindowSetMinimized called!\n");
+    BOOL visible = ShowWindowAsync(window_handle, SW_MINIMIZE);
 }

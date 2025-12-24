@@ -1,23 +1,26 @@
+#include "common.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
 
 void CgoNativeWindowSetIcon(void* window_handle, const char* filepath) {
-    printf("(darwin) CgoNativeWindowSetIcon called!\n");
+    UNUSED(window_handle);
+    UNUSED(filepath);
 }
 
-void CgoNativeWindowHide(void* window_handle) {
-    printf("(darwin) CgoNativeWindowHide called!\n");
+void CgoNativeWindowHide(void* controller_handle) {
+    UNUSED(controller_handle);
 }
 
-void CgoNativeWindowShow(void* window_handle) {
-    printf("(darwin) CgoNativeWindowShow called!\n");
+void CgoNativeWindowShow(void* controller_handle) {
+    UNUSED(controller_handle);
 }
 
 void CgoNativeWindowSetMaximized(void* window_handle) {
-    printf("(darwin) CgoNativeWindowSetMaximized called!\n");
+    UNUSED(window_handle);
 }
 
 void CgoNativeWindowSetMinimized(void* window_handle) {
-    printf("(darwin) CgoNativeWindowSetMinimized called!\n");
+    UNUSED(window_handle);
 }

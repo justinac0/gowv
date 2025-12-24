@@ -25,8 +25,8 @@ webview_error_t CgoWebViewUnbind(webview_t w, const char *name);
 
 // NOTE: gowv webview extension c functions.
 void CgoNativeWindowSetIcon(void* window_handle, const char* filepath);
-void CgoNativeWindowHide(void* window_handle);
-void CgoNativeWindowShow(void* window_handle);
+void CgoNativeWindowHide(void* controller_handle);
+void CgoNativeWindowShow(void* controller_handle);
 void CgoNativeWindowSetMaximized(void* window_handle);
 void CgoNativeWindowSetMinimized(void* window_handle);
 */
@@ -226,6 +226,10 @@ func (h *Instance) GetWindow() unsafe.Pointer {
 	return C.webview_get_window(h.W)
 }
 
+func (h *Instance) GetNativeHandle(kind NativeHandleKind) unsafe.Pointer {
+	return C.webview_get_native_handle(h.W, C.webview_native_handle_kind_t(kind))
+}
+
 // Schedules a function to be invoked on the thread with the run/event loop.
 //
 // Since library functions generally do not have thread safety guarantees,
@@ -259,19 +263,20 @@ func (h *Instance) SetSize(width int, height int, hints Hint) Error {
 func (h *Instance) SetIcon(icon string) Error {
 	s := C.CString(icon)
 	defer C.free(unsafe.Pointer(s))
+
 	C.CgoNativeWindowSetIcon(h.GetWindow(), s)
 
 	return WEBVIEW_ERROR_OK
 }
 
 func (h *Instance) Hide() Error {
-	C.CgoNativeWindowHide(h.GetWindow())
+	C.CgoNativeWindowHide(h.GetNativeHandle(WEBVIEW_NATIVE_HANDLE_KIND_BROWSER_CONTROLLER))
 
 	return WEBVIEW_ERROR_OK
 }
 
 func (h *Instance) Show() Error {
-	C.CgoNativeWindowShow(h.GetWindow())
+	C.CgoNativeWindowShow(h.GetNativeHandle(WEBVIEW_NATIVE_HANDLE_KIND_BROWSER_CONTROLLER))
 
 	return WEBVIEW_ERROR_OK
 }
