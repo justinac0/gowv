@@ -10,6 +10,26 @@
 #define GOWV_PLATFORM_DARWIN
 #elif defined(__unix__)
 #define GOWV_PLATFORM_LINUX
+
+#include <gtk/gtk.h>
+
+#if GTK_MAJOR_VERSION >= 4
+
+#ifdef GDK_WINDOWING_X11
+#include <gdk/x11/gdkx.h>
+#endif
+
+#define WINDOW_MINIMIZE(window) gtk_window_minimize(window)
+#define WINDOW_MAXIMIZE(window) gtk_window_maximize(window)
+
+#elif GTK_MAJOR_VERSION >= 3
+#ifdef GDK_WINDOWING_X11
+#include <gdk/gdkx.h>
+#endif
+#define WINDOW_MINIMIZE(window) gtk_window_iconify(window)
+#define WINDOW_MAXIMIZE(window) gtk_window_maximize(window)
+#endif
+
 #elif defined(_WIN32)
 #define GOWV_PLATFORM_WINDOWS
 #else

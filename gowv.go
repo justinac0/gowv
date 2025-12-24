@@ -25,8 +25,10 @@ webview_error_t CgoWebViewUnbind(webview_t w, const char *name);
 
 // NOTE: gowv webview extension c functions.
 void CgoNativeWindowSetIcon(void* window_handle, const char* filepath);
-void CgoNativeWindowHide(void* controller_handle);
-void CgoNativeWindowShow(void* controller_handle);
+void CgoNativeWindowHide(void* window_handle);
+void CgoNativeWindowShow(void* window_handle);
+// void CgoNativeWindowDecorated(void* window_handle, bool decorated);
+// void CgoNativeWindowFullscreen(void* window_handle, bool fullscreen);
 void CgoNativeWindowSetMaximized(void* window_handle);
 void CgoNativeWindowSetMinimized(void* window_handle);
 */
@@ -270,13 +272,13 @@ func (h *Instance) SetIcon(icon string) Error {
 }
 
 func (h *Instance) Hide() Error {
-	C.CgoNativeWindowHide(h.GetNativeHandle(WEBVIEW_NATIVE_HANDLE_KIND_BROWSER_CONTROLLER))
+	C.CgoNativeWindowHide(h.GetWindow())
 
 	return WEBVIEW_ERROR_OK
 }
 
 func (h *Instance) Show() Error {
-	C.CgoNativeWindowShow(h.GetNativeHandle(WEBVIEW_NATIVE_HANDLE_KIND_BROWSER_CONTROLLER))
+	C.CgoNativeWindowShow(h.GetWindow())
 
 	return WEBVIEW_ERROR_OK
 }

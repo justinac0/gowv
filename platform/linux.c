@@ -9,18 +9,18 @@ void CgoNativeWindowSetIcon(void* window_handle, const char* filepath) {
     UNUSED(filepath);
 }
 
-void CgoNativeWindowHide(void* controller_handle) {
-    UNUSED(controller_handle);
+void CgoNativeWindowHide(void* window_handle) {
+    UNUSED(window_handle);
 }
 
-void CgoNativeWindowShow(void* controller_handle) {
-    UNUSED(controller_handle);
+void CgoNativeWindowShow(void* window_handle) {
+    UNUSED(window_handle);
 }
 
 void CgoNativeWindowSetMaximized(void* window_handle) {
-    UNUSED(window_handle);
+    WINDOW_MAXIMIZE(GTK_WINDOW(window_handle));
 }
 
 void CgoNativeWindowSetMinimized(void* window_handle) {
-    UNUSED(window_handle);
+    WINDOW_MINIMIZE(GTK_WINDOW(window_handle));
 }

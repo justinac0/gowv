@@ -10,13 +10,13 @@ void CgoNativeWindowSetIcon(void* window_handle, const char* filepath) {
     UNUSED(filepath);
 }
 
-void CgoNativeWindowHide(void* controller_handle) {
-    BOOL visible = ShowWindowAsync(controller_handle, SW_HIDE);
+void CgoNativeWindowHide(void* window_handle) {
+    BOOL visible = ShowWindowAsync(window_handle, SW_HIDE);
     UNUSED(visible);
 }
 
-void CgoNativeWindowShow(void* controller_handle) {
-    BOOL visible = ShowWindowAsync(controller_handle, SW_SHOW);
+void CgoNativeWindowShow(void* window_handle) {
+    BOOL visible = ShowWindowAsync(window_handle, SW_SHOW);
 }
 
 void CgoNativeWindowSetMaximized(void* window_handle) {
