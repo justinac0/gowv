@@ -28,7 +28,6 @@ webview_error_t CgoWebViewUnbind(webview_t w, const char *name);
 void CgoNativeWindowSetIcon(void* window_handle, const char* filepath);
 void CgoNativeWindowHide(void* window_handle);
 void CgoNativeWindowShow(void* window_handle);
-// void CgoNativeWindowDecorated(void* window_handle, bool decorated);
 void CgoNativeWindowSetFullscreen(void* window_handle, bool fullscreen);
 void CgoNativeWindowSetMaximized(void* window_handle);
 void CgoNativeWindowSetMinimized(void* window_handle);

@@ -13,15 +13,15 @@ const html = `
 <button id="set_maximized">Set Maximized</button>
 <button id="set_minimized">Set Minimized</button>
 <script>
-  const setFullscreen = document.querySelector("#set_fullscreen")
-  const setIcon = document.querySelector("#set_icon")
+  const set_fullscreen = document.querySelector("#set_fullscreen")
+  const set_icon = document.querySelector("#set_icon")
   const show = document.querySelector("#show")
   const hide = document.querySelector("#hide")
   const set_maximized = document.querySelector("#set_maximized")
   const set_minimized = document.querySelector("#set_minimized")
   document.addEventListener("DOMContentLoaded", () => {
-  	setFullscreen.addEventListener("click", () => { window.native_set_fullscreen().then(result => {}); });
-    setIcon.addEventListener("click", () => { window.native_set_icon().then(result => {}); });
+  	set_fullscreen.addEventListener("click", () => { window.native_set_fullscreen().then(result => {}); });
+    set_icon.addEventListener("click", () => { window.native_set_icon().then(result => {}); });
     show.addEventListener("click", () => { window.native_show().then(result => {}); });
     hide.addEventListener("click", () => { window.native_hide().then(result => {}); });
     set_maximized.addEventListener("click", () => { window.native_set_maximized().then(result => {}); });
