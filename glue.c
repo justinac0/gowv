@@ -13,6 +13,7 @@
 
 // NOTE: some function names change between gtk3/4
 // namely *iconify -> *minimize
+//
 #include <gtk/gtk.h>
 
 #if GTK_MAJOR_VERSION >= 4
@@ -41,7 +42,6 @@
 
 // NOTE: import platform specific source for handling gowv webview extension
 // functionality.
-//
 #if defined(GOWV_PLATFORM_DARWIN)
 #include "platform/darwin.c"
 #elif defined(GOWV_PLATFORM_LINUX)
