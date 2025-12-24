@@ -2,19 +2,19 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <stddef.h>
 
 void CgoNativeWindowSetIcon(void* window_handle, const char* filepath) {
-    UNUSED(window_handle);
-    UNUSED(filepath);
+    gtk_window_set_icon_from_file(GTK_WINDOW(window_handle), filepath, NULL);
 }
 
 void CgoNativeWindowHide(void* window_handle) {
-    UNUSED(window_handle);
+    gtk_widget_set_visible(GTK_WIDGET(window_handle), false);
 }
 
 void CgoNativeWindowShow(void* window_handle) {
-    UNUSED(window_handle);
+    gtk_widget_set_visible(GTK_WIDGET(window_handle), true);
 }
 
 void CgoNativeWindowSetMaximized(void* window_handle) {

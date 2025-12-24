@@ -34,7 +34,7 @@ func main() {
 	w.SetSize(480, 320, webview.WEBVIEW_HINT_NONE)
 
 	w.Bind("native_set_icon", func() {
-		w.SetIcon("")
+		w.SetIcon("./examples/extension/icon.ico")
 	})
 
 	w.Bind("native_show", func() {

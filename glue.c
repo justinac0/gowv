@@ -11,6 +11,8 @@
 #elif defined(__unix__)
 #define GOWV_PLATFORM_LINUX
 
+// NOTE: some function names change between gtk3/4
+// namely *iconify -> *minimize
 #include <gtk/gtk.h>
 
 #if GTK_MAJOR_VERSION >= 4
@@ -19,6 +21,7 @@
 #include <gdk/x11/gdkx.h>
 #endif
 
+#warning "SetIcon won't work. Icons are application level since GTK4"
 #define WINDOW_MINIMIZE(window) gtk_window_minimize(window)
 #define WINDOW_MAXIMIZE(window) gtk_window_maximize(window)
 
@@ -38,6 +41,7 @@
 
 // NOTE: import platform specific source for handling gowv webview extension
 // functionality.
+//
 #if defined(GOWV_PLATFORM_DARWIN)
 #include "platform/darwin.c"
 #elif defined(GOWV_PLATFORM_LINUX)
