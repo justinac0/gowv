@@ -17,6 +17,7 @@ package gowv
 #include "webview.h"
 
 #include <stdlib.h>
+#include <stdbool.h>
 #include <stdint.h>
 
 webview_error_t CgoWebViewDispatch(webview_t w, uintptr_t arg);
@@ -28,7 +29,7 @@ void CgoNativeWindowSetIcon(void* window_handle, const char* filepath);
 void CgoNativeWindowHide(void* window_handle);
 void CgoNativeWindowShow(void* window_handle);
 // void CgoNativeWindowDecorated(void* window_handle, bool decorated);
-// void CgoNativeWindowFullscreen(void* window_handle, bool fullscreen);
+void CgoNativeWindowSetFullscreen(void* window_handle, bool fullscreen);
 void CgoNativeWindowSetMaximized(void* window_handle);
 void CgoNativeWindowSetMinimized(void* window_handle);
 */
@@ -261,7 +262,7 @@ func (h *Instance) SetSize(width int, height int, hints Hint) Error {
 	return Error(C.webview_set_size(h.W, C.int(width), C.int(height), C.webview_hint_t(hints)))
 }
 
-// Set the icon of the native window
+// Set the runtime icon of the native window.
 func (h *Instance) SetIcon(icon string) Error {
 	s := C.CString(icon)
 	defer C.free(unsafe.Pointer(s))
@@ -271,24 +272,35 @@ func (h *Instance) SetIcon(icon string) Error {
 	return WEBVIEW_ERROR_OK
 }
 
+// Hides the current window.
 func (h *Instance) Hide() Error {
 	C.CgoNativeWindowHide(h.GetWindow())
 
 	return WEBVIEW_ERROR_OK
 }
 
+// Shows the current window.
 func (h *Instance) Show() Error {
 	C.CgoNativeWindowShow(h.GetWindow())
 
 	return WEBVIEW_ERROR_OK
 }
 
+// Makes window fullscreen.
+func (h *Instance) SetFullscreen(fullscreen bool) Error {
+	C.CgoNativeWindowSetFullscreen(h.GetWindow(), C.bool(fullscreen))
+
+	return WEBVIEW_ERROR_OK
+}
+
+// Sets window to maximum bounds.
 func (h *Instance) SetMaximized() Error {
 	C.CgoNativeWindowSetMaximized(h.GetWindow())
 
 	return WEBVIEW_ERROR_OK
 }
 
+// Iconifies the window.
 func (h *Instance) SetMinimized() Error {
 	C.CgoNativeWindowSetMinimized(h.GetWindow())
 

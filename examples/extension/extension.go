@@ -6,18 +6,21 @@ import (
 )
 
 const html = `
+<button id="set_fullscreen">Set Fullscreen</button>
 <button id="set_icon">Set Icon</button>
 <button id="show">Show</button>
 <button id="hide">Hide</button>
 <button id="set_maximized">Set Maximized</button>
 <button id="set_minimized">Set Minimized</button>
 <script>
+  const setFullscreen = document.querySelector("#set_fullscreen")
   const setIcon = document.querySelector("#set_icon")
   const show = document.querySelector("#show")
   const hide = document.querySelector("#hide")
   const set_maximized = document.querySelector("#set_maximized")
   const set_minimized = document.querySelector("#set_minimized")
   document.addEventListener("DOMContentLoaded", () => {
+  	setFullscreen.addEventListener("click", () => { window.native_set_fullscreen().then(result => {}); });
     setIcon.addEventListener("click", () => { window.native_set_icon().then(result => {}); });
     show.addEventListener("click", () => { window.native_show().then(result => {}); });
     hide.addEventListener("click", () => { window.native_hide().then(result => {}); });
@@ -33,6 +36,16 @@ func main() {
 	w.SetTitle("Extension Example")
 	w.SetSize(480, 320, webview.WEBVIEW_HINT_NONE)
 
+	exTimeout := 2 * time.Second
+
+	w.Bind("native_set_fullscreen", func() {
+		go func() {
+			w.SetFullscreen(true)
+			time.Sleep(exTimeout)
+			w.SetFullscreen(false)
+		}()
+	})
+
 	w.Bind("native_set_icon", func() {
 		w.SetIcon("./examples/extension/icon.ico")
 	})
@@ -44,7 +57,7 @@ func main() {
 	w.Bind("native_hide", func() {
 		go func() {
 			w.Hide()
-			time.Sleep(2 * time.Second)
+			time.Sleep(exTimeout)
 			w.Show()
 		}()
 	})

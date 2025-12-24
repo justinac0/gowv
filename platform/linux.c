@@ -17,6 +17,14 @@ void CgoNativeWindowShow(void* window_handle) {
     gtk_widget_set_visible(GTK_WIDGET(window_handle), true);
 }
 
+void CgoNativeWindowSetFullscreen(void* window_handle, bool fullscreen) {
+    if (fullscreen) {
+        gtk_window_fullscreen(GTK_WINDOW(window_handle));
+    } else {
+        gtk_window_unfullscreen(GTK_WINDOW(window_handle));
+    }
+}
+
 void CgoNativeWindowSetMaximized(void* window_handle) {
     WINDOW_MAXIMIZE(GTK_WINDOW(window_handle));
 }

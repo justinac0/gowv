@@ -42,6 +42,7 @@
 
 // NOTE: import platform specific source for handling gowv webview extension
 // functionality.
+//
 #if defined(GOWV_PLATFORM_DARWIN)
 #include "platform/darwin.c"
 #elif defined(GOWV_PLATFORM_LINUX)
