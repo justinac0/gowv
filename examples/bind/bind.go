@@ -1,6 +1,6 @@
 package main
 
-import webview "gowv"
+import "github.com/justinac0/gowv"
 
 const html = `<button id="increment">Tap me</button>
 <div>You tapped <span id="count">0</span> time(s).</div>
@@ -22,11 +22,11 @@ type IncrementResult struct {
 
 func main() {
 	var count uint = 0
-	w := webview.Instance{}
+	w := gowv.Instance{}
 	w.Create(true, nil)
 	defer w.Destroy()
 	w.SetTitle("Bind Example")
-	w.SetSize(480, 320, webview.WEBVIEW_HINT_NONE)
+	w.SetSize(480, 320, gowv.WEBVIEW_HINT_NONE)
 
 	// A binding that increments a value and immediately returns the new value.
 	w.Bind("increment", func() IncrementResult {

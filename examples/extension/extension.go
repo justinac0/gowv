@@ -1,8 +1,9 @@
 package main
 
 import (
-	webview "gowv"
 	"time"
+
+	"github.com/justinac0/gowv"
 )
 
 const html = `
@@ -30,11 +31,11 @@ const html = `
 </script>`
 
 func main() {
-	w := webview.Instance{}
+	w := gowv.Instance{}
 	w.Create(true, nil)
 	defer w.Destroy()
 	w.SetTitle("Extension Example")
-	w.SetSize(480, 320, webview.WEBVIEW_HINT_NONE)
+	w.SetSize(480, 320, gowv.WEBVIEW_HINT_NONE)
 
 	exTimeout := 2 * time.Second
 

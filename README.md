@@ -1,6 +1,7 @@
 # gowv
 **gowv** is a webview wrapper for go, it's heavily based of `webview/webview_go`.
-It provides extra control over underlying the native window which I was looking for in webview.
+It provides extra control over underlying the native window which I was looking
+for in webview.
 
 ## Setup
 - Read the official webview `README.md`: https://github.com/webview/webview/tree/master
@@ -11,12 +12,7 @@ It provides extra control over underlying the native window which I was looking 
 - run `pacman -S mingw-w64-ucrt-x86_64-gcc`
 - set env path to bin/ of urct64
 ## TODO
-- [ ] cross-platform SetIcon
-- [ ] cross-platform Hide 
-- [ ] cross-platform Show
-- [ ] cross-platform SetMaximized 
-- [ ] cross-platform SetMinimized
-- [ ] control over window decorations
+- [ ] darwin support with extension functions 
 
 ## License(s)
 ### webview

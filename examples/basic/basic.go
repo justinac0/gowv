@@ -1,7 +1,7 @@
 package main
 
 import (
-	"gowv"
+	"github.com/justinac0/gowv"
 )
 
 func main() {
