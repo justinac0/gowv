@@ -1,5 +1,5 @@
 # gowv
-**gowv** is a webview wrapper for go, it's heavily based of `webview/webview_go`.
+**gowv** is a webview wrapper for go, it's heavily based on `webview/webview_go`.
 It provides extra control over underlying the native window which I was looking
 for in webview.
 
